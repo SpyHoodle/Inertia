@@ -3,6 +3,20 @@
 version = 3
 
 [[package]]
+name = "agenda"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "clap",
+ "colored",
+ "dirs",
+ "fuzzydate",
+ "prettytable-rs",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "android_system_properties"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -263,6 +277,17 @@ checksum = "aa68f1b12764fab894d2755d2518754e71b4fd80ecfb822714a1206c2aab39bf"
 dependencies = [
  "cc",
  "libc",
+]
+
+[[package]]
+name = "fuzzydate"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "10cc638ce39f54e307c2648a5cf89fb549a0b66bc59f9de933b51b1dfe53c813"
+dependencies = [
+ "chrono",
+ "lazy_static",
+ "thiserror",
 ]
 
 [[package]]
@@ -585,19 +610,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-ident",
-]
-
-[[package]]
-name = "tasks"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "clap",
- "colored",
- "dirs",
- "prettytable-rs",
- "serde",
- "serde_json",
 ]
 
 [[package]]

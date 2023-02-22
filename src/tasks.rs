@@ -1,12 +1,7 @@
 use serde::{Deserialize, Serialize};
-use chrono::{DateTime, Utc};
+use chrono::{NaiveDateTime, Utc};
 use colored::*;
 
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Tag {
-    title: String, // The required title of the tag
-}
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum Status {
@@ -20,7 +15,7 @@ impl Status {
     pub fn as_string(&self) -> ColoredString {
         match self {
             Status::Inbox => "📮 Inbox".blue(),
-            Status::Pending => "🗓️ Pending".yellow(),
+            Status::Pending => "📅 Pending".yellow(),
             Status::Active => "✍️ Active".red(),
             Status::Complete => "📗 Complete".green(),
         }
@@ -32,11 +27,11 @@ pub struct Task {
     pub title: String,               // The required title of the task
     pub status: Status,              // Current status of the task
     pub notes: Option<String>,           // Any notes to explain the task
-    pub tags: Option<Vec<Tag>>,          // Tasks can be tagged for organisation
+    pub tags: Option<Vec<String>>,          // Tasks can be tagged for organisation
     pub subtasks: Option<Vec<Task>>,     // Tasks can be hierarchically split into subtasks
-    pub when: Option<DateTime<Utc>>,     // The date you want to do the task
-    pub deadline: Option<DateTime<Utc>>, // The latest date the task should be done
-    pub reminder: Option<DateTime<Utc>>, // The datetime a reminder will alert you
+    pub when: Option<NaiveDateTime>,     // The date you want to do the task
+    pub deadline: Option<NaiveDateTime>, // The latest date the task should be done
+    pub reminder: Option<NaiveDateTime>, // The datetime a reminder will alert you
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -46,16 +41,22 @@ pub struct Tasks {
 }
 
 impl Task {
-    pub fn new(title: String) -> Self {
+    pub fn new(title: String, notes: Option<String>, tags: Option<Vec<String>>, when: Option<NaiveDateTime>, deadline: Option<NaiveDateTime>, reminder: Option<NaiveDateTime>) -> Self {
+        let status = if when.is_some() {
+            Status::Pending
+        } else {
+            Status::Inbox
+        };
+
         Self {
             title,
-            status: Status::Inbox,
-            notes: None,
-            tags: None,
+            status,
+            notes,
+            tags,
             subtasks: None,
-            when: None,
-            deadline: None,
-            reminder: None,
+            when,
+            deadline,
+            reminder,
         }
     }
 }
