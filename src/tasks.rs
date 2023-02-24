@@ -1,7 +1,10 @@
 use serde::{Deserialize, Serialize};
-use chrono::{NaiveDateTime, Utc};
+use chrono::NaiveDateTime;
 use colored::*;
 
+
+#[derive(Debug)]
+pub struct TasksError(String);
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum Status {
@@ -9,17 +12,6 @@ pub enum Status {
     Pending,
     Active,
     Complete,
-}
-
-impl Status {
-    pub fn as_string(&self) -> ColoredString {
-        match self {
-            Status::Inbox => "📮 Inbox".blue(),
-            Status::Pending => "📅 Pending".yellow(),
-            Status::Active => "✍️ Active".red(),
-            Status::Complete => "📗 Complete".green(),
-        }
-    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -41,23 +33,28 @@ pub struct Tasks {
 }
 
 impl Task {
-    pub fn new(title: String, notes: Option<String>, tags: Option<Vec<String>>, when: Option<NaiveDateTime>, deadline: Option<NaiveDateTime>, reminder: Option<NaiveDateTime>) -> Self {
-        let status = if when.is_some() {
-            Status::Pending
-        } else {
-            Status::Inbox
-        };
+    pub fn new(title: String, notes: Option<String>, tags: Option<Vec<String>>,
+               when: Option<NaiveDateTime>, deadline: Option<NaiveDateTime>,
+               reminder: Option<NaiveDateTime>) -> Self {
+        let status = if when.is_some() { Status::Pending } else { Status::Inbox };
 
-        Self {
-            title,
-            status,
-            notes,
-            tags,
-            subtasks: None,
-            when,
-            deadline,
-            reminder,
+        Self { title, status, notes, tags, subtasks: None, when, deadline, reminder, }
+    }
+
+    pub fn start(&mut self) {
+        self.status = Status::Active;
+    }
+
+    pub fn stop(&mut self) {
+        if self.when.is_none() {
+            self.status = Status::Inbox;
+        } else {
+            self.status = Status::Pending;
         }
+    }
+
+    pub fn complete(&mut self) {
+        self.status = Status::Complete;
     }
 }
 
@@ -69,43 +66,78 @@ impl Tasks {
         }
     }
 
-    pub fn get_task(&mut self, id: usize) -> Result<&mut Task, &str> {
-        if self.tasks.is_none() {
-            Err("there are no tasks")
+    fn task_not_found(&self, id: usize) -> TasksError {
+        TasksError(format!("couldn't find task with id {}", id))
+    }
+
+    fn task_exists(&self, id: usize) -> bool{
+        if id >= self.len() { false } else { true }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        if self.len() == 0 {
+            true
         } else {
-            if id >= self.tasks.as_ref().unwrap().len() {
-                Err("couldn't find task")
-            } else {
+            false
+        }
+    }
+
+    pub fn get_task(&mut self, id: usize) -> Result<&mut Task, TasksError> {
+        if self.is_empty() {
+            Err(TasksError(format!("no tasks available")))
+        } else {
+            if self.task_exists(id) {
                 let task = &mut self.tasks.as_mut().unwrap()[id];
                 Ok(task)
+            } else {
+                Err(TasksError(format!("couldn't find task with id {}", id)))
             }
         }
     }
 
-    #[allow(dead_code)]
-    pub fn set_status(&mut self, id: usize, status: Status) {
-        let mut task: &mut Task = self.get_task(id).unwrap();
-        task.status = status;
-    }
-
-    pub fn add(&mut self, task: Task) {
-        if self.tasks.is_none() {
+    pub fn push(&mut self, task: Task) {
+        if self.is_empty() {
             self.tasks = Some(vec![task]);
         } else {
             self.tasks.as_mut().unwrap().push(task);
         };
     }
 
-    pub fn del(&mut self, id: usize) {
-        self.tasks.as_mut().unwrap().remove(id);
+    pub fn remove(&mut self, id: usize) -> Result<(), TasksError> {
+        if self.task_exists(id) {
+            self.tasks.as_mut().unwrap().remove(id);
+            Ok(())
+        } else {
+            Err(self.task_not_found(id))
+        }
     }
 
     pub fn len(&self) -> usize {
-        self.tasks.as_ref().unwrap().len()
+        if self.tasks.is_none() {
+            0
+        } else {
+            self.tasks.as_ref().unwrap().len()
+        }
     }
 
-    pub fn clear(&mut self) {
-        self.tasks = None;
+    pub fn clear(&mut self) -> Result<(), TasksError> {
+        if self.is_empty() {
+            Err(TasksError(String::from("no tasks available")))
+        } else {
+            self.tasks = None;
+            Ok(())
+        }
+    }
+}
+
+impl Status {
+    pub fn as_string(&self) -> ColoredString {
+        match self {
+            Status::Inbox => "📮 Inbox".blue(),
+            Status::Pending => "📅 Pending".yellow(),
+            Status::Active => "✍️ Active".red(),
+            Status::Complete => "📗 Complete".green(),
+        }
     }
 }
 

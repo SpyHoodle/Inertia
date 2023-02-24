@@ -1,12 +1,14 @@
-use chrono::NaiveDateTime;
+use chrono::{NaiveDateTime, Local};
 use crate::args::{TasksArgs, Commands};
 use crate::args::{CreateTask, DeleteTask, ShowTask, StartTask, StopTask, CompleteTask};
-use crate::tasks::{Tasks, Task, Status};
+use crate::tasks::{Tasks, Task, Status, TasksError};
 use prettytable::{Table, Row, row, format};
 use colored::*;
 use fuzzydate;
+use std::panic;
 
-pub fn success(msg: String) {
+
+fn success(msg: String) {
     println!("{} {}", "success:".green().bold(), msg);
 }
 
@@ -14,26 +16,20 @@ pub fn warning(msg: &str) {
     println!("{} {}", "warning:".yellow().bold(), msg);
 }
 
-#[allow(dead_code)]
-pub fn error(msg: String) {
-    println!("{} {}", "error:".red().bold(), msg);
-    panic!();
+pub fn info(msg: &str) {
+    println!("{} {}", "info:".blue().bold(), msg);
 }
 
 fn task_msg(msg: &str, task: &Task, id: usize) -> String {
     format!("{} task: {}({})", msg, task.title.blue(), id.to_string().cyan())
 }
 
-fn get_task(tasks: &mut Tasks, id: usize) -> Task {
-    match tasks.get_task(id) {
-        Ok(task) => task.clone(),
-        Err(error) => panic!("error: {}", error),
-    }
-}
-
 fn parse_date(date_string: Option<String>) -> Option<NaiveDateTime> {
     if date_string.is_some() {
-        Some(fuzzydate::parse(date_string.unwrap()).unwrap())
+        match fuzzydate::parse(date_string.unwrap()) {
+            Ok(date) => Some(date),
+            Err(err) => panic!("{:?}", err),
+        }
     } else {
         None
     }
@@ -44,12 +40,23 @@ fn calc_row(task: &Task, id: usize) -> Row {
         // Generate greyed out rows for complete tasks
         Row::from([id.to_string().bright_black().italic(),
             task.status.as_string().bright_black().italic(),
+            "N/A".bright_black(),
             task.title.clone().bright_black().italic()])
+
     } else {
         let when = if task.when.is_some() {
-            format!("{}", task.when.unwrap().format("%Y-%m-%d")).bright_black()
+            let date = format!("{}", task.when.unwrap().format("%Y-%m-%d"));
+            let now = Local::now().date_naive();
+
+            if now == task.when.unwrap().date() {
+                date.bright_red()
+            } else if now.succ_opt().unwrap() == task.when.unwrap().date() {
+                date.yellow()
+            } else {
+                date.white()
+            }
         } else {
-            String::from("N/A").bright_black()
+            "N/A".bright_black()
         };
 
         // Generate normal colored rows for uncompleted tasks
@@ -57,7 +64,7 @@ fn calc_row(task: &Task, id: usize) -> Row {
     }
 }
 
-pub fn execute(tasks: &mut Tasks, arguments: TasksArgs) -> &mut Tasks {
+pub fn execute(tasks: &mut Tasks, arguments: TasksArgs) -> Result<&mut Tasks, TasksError> {
     match arguments.command {
         Commands::Add(CreateTask { title, notes, tags, when, deadline, reminder, ..}) => {
             let when = parse_date(when);
@@ -70,53 +77,58 @@ pub fn execute(tasks: &mut Tasks, arguments: TasksArgs) -> &mut Tasks {
             };
 
             let task = Task::new(title, notes, tags, when, deadline, reminder);
-            tasks.add(task.clone());
+            tasks.push(task.clone());
 
             let id = tasks.len() - 1;
             success(task_msg("created", &task, id));
+
+            Ok(tasks)
         }
 
         Commands::Del(DeleteTask { id }) => {
-            let task = get_task(tasks, id);
+            let mut binding = tasks.clone();
+            let task = binding.get_task(id)?;
+            tasks.remove(id)?;
 
-            tasks.del(id);
             success(task_msg("deleted", &task, id));
+            Ok(tasks)
         }
 
         Commands::Done(CompleteTask { id }) => {
-            let task = get_task(&mut tasks.clone(), id);
+            let task = tasks.get_task(id)?;
+            task.complete();
 
-            tasks.set_status(id, Status::Complete);
             success(task_msg("completed", &task, id));
+            Ok(tasks)
         }
 
         Commands::Start(StartTask { id }) => {
-            let task = get_task(&mut tasks.clone(), id);
+            let task = tasks.get_task(id)?;
+            task.start();
 
-            tasks.set_status(id, Status::Active);
             success(task_msg("started", &task, id));
+            Ok(tasks)
         }
 
         Commands::Stop(StopTask { id }) => {
-            let task = get_task(&mut tasks.clone(), id);
+            let task = tasks.get_task(id)?;
+            task.stop();
 
-            if task.when.is_none() {
-                tasks.set_status(id, Status::Inbox);
-            } else {
-                tasks.set_status(id, Status::Pending);
-            };
             success(task_msg("stopped", &task, id));
+            Ok(tasks)
         }
 
         Commands::Clear => {
-            tasks.clear();
+            tasks.clear()?;
+
             success(String::from("cleared all tasks"));
+            Ok(tasks)
         }
 
         Commands::Show(ShowTask { id }) => {
             if id.is_none() {
-                if tasks.tasks.is_none() {
-                    warning("no tasks available to show")
+                if tasks.is_empty() {
+                    info("no tasks found")
                 } else {
                     // Create the table for printing
                     let mut table = Table::new();
@@ -134,8 +146,9 @@ pub fn execute(tasks: &mut Tasks, arguments: TasksArgs) -> &mut Tasks {
                     println!("{}", table);
                 };
             } else {
+                // Get the task
                 let id = id.unwrap();
-                let task = get_task(&mut tasks.clone(), id);
+                let task = tasks.get_task(id)?;
 
                 // Generate and print the table
                 let mut table = Table::new();
@@ -144,9 +157,10 @@ pub fn execute(tasks: &mut Tasks, arguments: TasksArgs) -> &mut Tasks {
                 table.add_row(calc_row(&task, id));
                 println!("{}", table)
             };
+
+            Ok(tasks)
         }
 
         _ => todo!()
-    };
-    tasks
+    }
 }
