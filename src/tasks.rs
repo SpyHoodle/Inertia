@@ -1,7 +1,6 @@
-use serde::{Deserialize, Serialize};
 use chrono::NaiveDateTime;
 use colored::*;
-
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug)]
 pub struct TasksError(String);
@@ -16,11 +15,10 @@ pub enum Status {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Task {
-    pub title: String,               // The required title of the task
-    pub status: Status,              // Current status of the task
+    pub title: String,                   // The required title of the task
+    pub status: Status,                  // Current status of the task
     pub notes: Option<String>,           // Any notes to explain the task
-    pub tags: Option<Vec<String>>,          // Tasks can be tagged for organisation
-    pub subtasks: Option<Vec<Task>>,     // Tasks can be hierarchically split into subtasks
+    pub tags: Option<Vec<String>>,       // Tasks can be tagged for organisation
     pub when: Option<NaiveDateTime>,     // The date you want to do the task
     pub deadline: Option<NaiveDateTime>, // The latest date the task should be done
     pub reminder: Option<NaiveDateTime>, // The datetime a reminder will alert you
@@ -32,13 +30,64 @@ pub struct Tasks {
     pub tasks: Option<Vec<Task>>, // All the tasks in one vector
 }
 
-impl Task {
-    pub fn new(title: String, notes: Option<String>, tags: Option<Vec<String>>,
-               when: Option<NaiveDateTime>, deadline: Option<NaiveDateTime>,
-               reminder: Option<NaiveDateTime>) -> Self {
-        let status = if when.is_some() { Status::Pending } else { Status::Inbox };
+fn task_not_found(id: usize) -> TasksError {
+    TasksError(format!("couldn't find task with id {}", id))
+}
 
-        Self { title, status, notes, tags, subtasks: None, when, deadline, reminder, }
+fn no_tasks_available() -> TasksError {
+    TasksError(String::from("no tasks available"))
+}
+
+impl Task {
+    pub fn new(
+        title: String,
+        notes: Option<String>,
+        tags: Option<Vec<String>>,
+        when: Option<NaiveDateTime>,
+        deadline: Option<NaiveDateTime>,
+        reminder: Option<NaiveDateTime>,
+    ) -> Self {
+        let status = if when.is_some() {
+            Status::Pending
+        } else {
+            Status::Inbox
+        };
+
+        Self {
+            title,
+            status,
+            notes,
+            tags,
+            when,
+            deadline,
+            reminder,
+        }
+    }
+
+    pub fn modify(&mut self, title: Option<String>, notes: Option<String>, tags: Option<Vec<String>>, when: Option<NaiveDateTime>, deadline: Option<NaiveDateTime>, reminder: Option<NaiveDateTime>) {
+        if title.is_some() {
+            self.title = title.unwrap();
+        };
+
+        if notes.is_some() {
+            self.notes = Some(notes.unwrap());
+        };
+
+        if tags.is_some() {
+            self.tags = Some(tags.unwrap());
+        };
+
+        if when.is_some() {
+            self.when = Some(when.unwrap());
+        };
+
+        if deadline.is_some() {
+            self.deadline = Some(deadline.unwrap());
+        };
+
+        if reminder.is_some() {
+            self.reminder = Some(reminder.unwrap());
+        };
     }
 
     pub fn start(&mut self) {
@@ -62,16 +111,16 @@ impl Tasks {
     pub fn new(tasks_path: &str) -> Self {
         Self {
             path: String::from(tasks_path),
-            tasks: None
+            tasks: None,
         }
     }
 
-    fn task_not_found(&self, id: usize) -> TasksError {
-        TasksError(format!("couldn't find task with id {}", id))
-    }
-
-    fn task_exists(&self, id: usize) -> bool{
-        if id >= self.len() { false } else { true }
+    pub fn task_exists(&self, id: usize) -> bool {
+        if id >= self.len() {
+            false
+        } else {
+            true
+        }
     }
 
     pub fn is_empty(&self) -> bool {
@@ -84,13 +133,12 @@ impl Tasks {
 
     pub fn get_task(&mut self, id: usize) -> Result<&mut Task, TasksError> {
         if self.is_empty() {
-            Err(TasksError(format!("no tasks available")))
+            Err(no_tasks_available())
         } else {
             if self.task_exists(id) {
-                let task = &mut self.tasks.as_mut().unwrap()[id];
-                Ok(task)
+                Ok(&mut self.tasks.as_mut().unwrap()[id])
             } else {
-                Err(TasksError(format!("couldn't find task with id {}", id)))
+                Err(task_not_found(id))
             }
         }
     }
@@ -108,7 +156,7 @@ impl Tasks {
             self.tasks.as_mut().unwrap().remove(id);
             Ok(())
         } else {
-            Err(self.task_not_found(id))
+            Err(task_not_found(id))
         }
     }
 
@@ -122,7 +170,7 @@ impl Tasks {
 
     pub fn clear(&mut self) -> Result<(), TasksError> {
         if self.is_empty() {
-            Err(TasksError(String::from("no tasks available")))
+            Err(no_tasks_available())
         } else {
             self.tasks = None;
             Ok(())
@@ -135,9 +183,8 @@ impl Status {
         match self {
             Status::Inbox => "📮 Inbox".blue(),
             Status::Pending => "📅 Pending".yellow(),
-            Status::Active => "✍️ Active".red(),
+            Status::Active => "🕑 Active".red(),
             Status::Complete => "📗 Complete".green(),
         }
     }
 }
-

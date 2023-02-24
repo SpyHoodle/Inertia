@@ -1,13 +1,13 @@
-mod tasks;
 mod args;
-mod data;
 mod cli;
+mod data;
+mod tasks;
 
-use crate::tasks::Tasks;
 use crate::args::TasksArgs;
-use std::path::Path;
+use crate::tasks::Tasks;
 use clap::Parser;
 use colored::*;
+use std::path::Path;
 
 fn main() {
     // Generate the file path for tasks
