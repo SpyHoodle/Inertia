@@ -4,18 +4,13 @@ use crate::cli::tables;
 use crate::tasks::{Task, Tasks, TasksError};
 
 fn parse_tags(tags: Option<String>) -> Option<Vec<String>> {
-    if let Some(..) = tags {
-        Some(tags.unwrap().split(',').map(str::to_string).collect())
-    } else {
-        None
-    }
+    tags.map(|tags| tags.split(',').map(str::to_string).collect())
 }
 
 pub fn show(tasks: &mut Tasks, id: Option<usize>) -> Result<(), TasksError> {
     // If no id is given, print out all tasks
-    if let Some(..) = id {
+    if let Some(id) = id {
         // Get the task the user wants to see
-        let id = id.unwrap();
         let task = tasks.get_task(id)?;
 
         // Generate the table for the singular task

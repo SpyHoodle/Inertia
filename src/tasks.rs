@@ -26,7 +26,8 @@ pub struct Task {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Tasks {
-    pub path: String,             // Where the tasks are stored
+    pub path: String,             // Path to the tasks repository
+    pub file: String,             // Path to the tasks file in the repository
     pub tasks: Option<Vec<Task>>, // All the tasks in one vector
 }
 
@@ -73,28 +74,28 @@ impl Task {
         deadline: Option<NaiveDateTime>,
         reminder: Option<NaiveDateTime>,
     ) {
-        if let Some(..) = title {
-            self.title = title.unwrap();
+        if let Some(title) = title {
+            self.title = title;
         };
 
-        if let Some(..) = notes {
-            self.notes = Some(notes.unwrap());
+        if let Some(notes) = notes {
+            self.notes = Some(notes);
         };
 
-        if let Some(..) = tags {
-            self.tags = Some(tags.unwrap());
+        if let Some(tags) = tags {
+            self.tags = Some(tags);
         };
 
-        if let Some(..) = when {
-            self.when = Some(when.unwrap());
+        if let Some(when) = when {
+            self.when = Some(when);
         };
 
-        if let Some(..) = deadline {
-            self.deadline = Some(deadline.unwrap());
+        if let Some(deadline) = deadline {
+            self.deadline = Some(deadline);
         };
 
-        if let Some(..) = reminder {
-            self.reminder = Some(reminder.unwrap());
+        if let Some(reminder) = reminder {
+            self.reminder = Some(reminder);
         };
     }
 
@@ -116,9 +117,10 @@ impl Task {
 }
 
 impl Tasks {
-    pub fn new(tasks_path: &str) -> Self {
+    pub fn new(repo_path: &str, tasks_file: &str) -> Self {
         Self {
-            path: String::from(tasks_path),
+            path: String::from(repo_path),
+            file: String::from(tasks_file),
             tasks: None,
         }
     }

@@ -1,16 +1,16 @@
+mod cmds;
 mod dates;
+pub mod git;
 pub mod output;
 mod tables;
 
-mod cmds;
-
-use crate::args::{Commands, TasksArgs};
+use crate::args::{Commands, GitExecute, TasksArgs};
 use crate::args::{
-    CompleteTask, CreateTask, DeleteTask, ModifyTask, ShowTask, StartTask, StopTask,
+    CompleteTask, CreateTask, DeleteTask, ModifyTask, ShowTask, StartTask, StopTask, SyncTasks,
 };
 use crate::tasks::{Tasks, TasksError};
 
-pub fn execute(tasks: &mut Tasks, arguments: TasksArgs) -> Result<&mut Tasks, TasksError> {
+pub fn execute(tasks: &mut Tasks, arguments: TasksArgs) -> Result<(), TasksError> {
     match arguments.command {
         Commands::Add(CreateTask {
             title,
@@ -59,8 +59,17 @@ pub fn execute(tasks: &mut Tasks, arguments: TasksArgs) -> Result<&mut Tasks, Ta
             cmds::show(tasks, id)?;
         }
 
+        Commands::Git(GitExecute { command }) => match git::execute(&tasks.path, command) {
+            Ok(..) => (),
+            Err(..) => panic!("failed to execute git cmd"),
+        },
+
+        Commands::Sync(SyncTasks { remote }) => match git::sync(&tasks.path, remote) {
+            Ok(..) => (),
+            Err(..) => panic!("failed"),
+        },
+
         _ => todo!(),
     };
-
-    Ok(tasks)
+    Ok(())
 }

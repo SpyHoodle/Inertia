@@ -3,36 +3,36 @@ mod cli;
 mod data;
 mod tasks;
 
-use crate::args::TasksArgs;
-use crate::tasks::Tasks;
 use clap::Parser;
 use colored::*;
-use std::path::Path;
+
+use crate::args::TasksArgs;
 
 fn main() {
-    // Generate the file path for tasks
-    let tasks_file_path = data::tasks_file_path();
+    // Generate the file paths for tasks
+    let repo_path = &data::tasks_repo_string();
+    let tasks_file = "tasks";
 
     // If the tasks file doesn't exist, create it first
-    if !Path::new(&tasks_file_path).exists() {
-        cli::output::warning("file '~/.local/share/tasks' does not exist. creating...");
-        let tasks = Tasks::new(&tasks_file_path);
-        data::save_tasks(&tasks_file_path, &tasks).unwrap();
+    match data::ensure_repo(repo_path, tasks_file) {
+        Ok(..) => (),
+        Err(error) => panic!("{} {:?}", "error:".red().bold(), error),
     };
 
     // Load tasks and check for any errors when loading the tasks
-    let mut tasks = match data::load_tasks(&tasks_file_path) {
+    let mut tasks = match data::load_tasks(repo_path, tasks_file) {
         Ok(tasks) => tasks,
         Err(error) => panic!("{} {:?}", "error:".red().bold(), error),
     };
 
     // Parse command line arguments
     let arguments = TasksArgs::parse();
-    let tasks = match cli::execute(&mut tasks, arguments) {
-        Ok(tasks) => tasks,
+    match cli::execute(&mut tasks, arguments) {
+        Ok(..) => (),
         Err(error) => panic!("{} {:?}", "error:".red().bold(), error),
     };
 
     // Save any changes
-    data::save_tasks(tasks_file_path, tasks).unwrap()
+    cli::git::execute(repo_path, String::from("add --all")).unwrap();
+    data::save_tasks(&repo_path, &tasks).unwrap();
 }
