@@ -7,7 +7,7 @@ pub struct TasksArgs {
     pub command: Commands,
 }
 
-#[derive(Subcommand, PartialEq, Debug)]
+#[derive(Subcommand, PartialEq, Eq, Debug)]
 pub enum Commands {
     /// Creates a new task
     Add(CreateTask),
@@ -25,7 +25,7 @@ pub enum Commands {
     Stop(StopTask),
     /// Edit a task with $EDITOR
     Edit(EditTask),
-    /// Modify a task at the cli
+    /// Modify a task at the command line
     Modify(ModifyTask),
     /// Passes git commands to the repository
     Git(GitExecute),
@@ -35,7 +35,7 @@ pub enum Commands {
     Undo(UndoExecute),
 }
 
-#[derive(Args, PartialEq, Debug)]
+#[derive(Args, PartialEq, Eq, Debug)]
 pub struct CreateTask {
     /// Title of the task
     pub title: String,
@@ -65,44 +65,43 @@ pub struct CreateTask {
     #[clap(default_value=None)]
     pub reminder: Option<String>,
 }
-#[derive(Args, PartialEq, Debug)]
+#[derive(Args, PartialEq, Eq, Debug)]
 pub struct DeleteTask {
     /// ID of the task
     pub id: usize,
 }
-#[derive(Args, PartialEq, Debug)]
+#[derive(Args, PartialEq, Eq, Debug)]
 pub struct ShowTask {
     /// ID of the task
     #[clap(default_value=None)]
     pub id: Option<usize>,
 }
-#[derive(Args, PartialEq, Debug)]
+#[derive(Args, PartialEq, Eq, Debug)]
 pub struct CompleteTask {
     /// ID of the task
     pub id: usize,
 }
-#[derive(Args, PartialEq, Debug)]
+#[derive(Args, PartialEq, Eq, Debug)]
 pub struct StartTask {
     /// ID of the task
     pub id: usize,
 }
-#[derive(Args, PartialEq, Debug)]
+#[derive(Args, PartialEq, Eq, Debug)]
 pub struct StopTask {
     /// ID of the task
     pub id: usize,
 }
-#[derive(Args, PartialEq, Debug)]
+#[derive(Args, PartialEq, Eq, Debug)]
 pub struct EditTask {
     /// ID of the task
     pub id: usize,
 }
-#[derive(Args, PartialEq, Debug)]
+#[derive(Args, PartialEq, Eq, Debug)]
 pub struct ModifyTask {
     /// ID of the task
     pub id: usize,
 
     /// Title of the task
-    #[arg(short, long)]
     #[clap(default_value=None)]
     pub title: Option<String>,
 
@@ -131,18 +130,18 @@ pub struct ModifyTask {
     #[clap(default_value=None)]
     pub reminder: Option<String>,
 }
-#[derive(Args, PartialEq, Debug)]
+#[derive(Args, PartialEq, Eq, Debug)]
 pub struct GitExecute {
     /// Git command to run
     pub command: String,
 }
-#[derive(Args, PartialEq, Debug)]
+#[derive(Args, PartialEq, Eq, Debug)]
 pub struct SyncTasks {
     /// Git remote to use
     #[clap(default_value = "origin")]
     pub remote: String,
 }
-#[derive(Args, PartialEq, Debug)]
+#[derive(Args, PartialEq, Eq, Debug)]
 pub struct UndoExecute {
     /// Number of times to undo
     #[clap(default_value = "1")]

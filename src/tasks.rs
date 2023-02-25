@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug)]
 pub struct TasksError(String);
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub enum Status {
     Inbox,
     Pending,
@@ -64,28 +64,36 @@ impl Task {
         }
     }
 
-    pub fn modify(&mut self, title: Option<String>, notes: Option<String>, tags: Option<Vec<String>>, when: Option<NaiveDateTime>, deadline: Option<NaiveDateTime>, reminder: Option<NaiveDateTime>) {
-        if title.is_some() {
+    pub fn modify(
+        &mut self,
+        title: Option<String>,
+        notes: Option<String>,
+        tags: Option<Vec<String>>,
+        when: Option<NaiveDateTime>,
+        deadline: Option<NaiveDateTime>,
+        reminder: Option<NaiveDateTime>,
+    ) {
+        if let Some(..) = title {
             self.title = title.unwrap();
         };
 
-        if notes.is_some() {
+        if let Some(..) = notes {
             self.notes = Some(notes.unwrap());
         };
 
-        if tags.is_some() {
+        if let Some(..) = tags {
             self.tags = Some(tags.unwrap());
         };
 
-        if when.is_some() {
+        if let Some(..) = when {
             self.when = Some(when.unwrap());
         };
 
-        if deadline.is_some() {
+        if let Some(..) = deadline {
             self.deadline = Some(deadline.unwrap());
         };
 
-        if reminder.is_some() {
+        if let Some(..) = reminder {
             self.reminder = Some(reminder.unwrap());
         };
     }
@@ -116,30 +124,20 @@ impl Tasks {
     }
 
     pub fn task_exists(&self, id: usize) -> bool {
-        if id >= self.len() {
-            false
-        } else {
-            true
-        }
+        id < self.len()
     }
 
     pub fn is_empty(&self) -> bool {
-        if self.len() == 0 {
-            true
-        } else {
-            false
-        }
+        self.len() == 0
     }
 
     pub fn get_task(&mut self, id: usize) -> Result<&mut Task, TasksError> {
         if self.is_empty() {
             Err(no_tasks_available())
+        } else if self.task_exists(id) {
+            Ok(&mut self.tasks.as_mut().unwrap()[id])
         } else {
-            if self.task_exists(id) {
-                Ok(&mut self.tasks.as_mut().unwrap()[id])
-            } else {
-                Err(task_not_found(id))
-            }
+            Err(task_not_found(id))
         }
     }
 

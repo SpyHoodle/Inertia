@@ -15,7 +15,7 @@ fn main() {
 
     // If the tasks file doesn't exist, create it first
     if !Path::new(&tasks_file_path).exists() {
-        cli::warning("file '~/.local/share/tasks' does not exist. creating..");
+        cli::output::warning("file '~/.local/share/tasks' does not exist. creating...");
         let tasks = Tasks::new(&tasks_file_path);
         data::save_tasks(&tasks_file_path, &tasks).unwrap();
     };
@@ -34,5 +34,5 @@ fn main() {
     };
 
     // Save any changes
-    data::save_tasks(tasks_file_path, &tasks).unwrap()
+    data::save_tasks(tasks_file_path, tasks).unwrap()
 }
