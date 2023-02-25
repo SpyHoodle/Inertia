@@ -21,7 +21,7 @@ down once so that you can come back to it knowing exactly what to do.
 - [ ] Git synchronization
 
 ## Examples
-**Creating a task** - which you will do it today, deadline tomorrow
+**Creating a task** - which you will do today, but is due tomorrow
 ```sh
 inertia add "read emails" -w now -d tomorrow
 ```
