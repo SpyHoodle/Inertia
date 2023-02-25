@@ -14,22 +14,20 @@ fn parse_tags(tags: Option<String>) -> Option<Vec<String>> {
 pub fn show(tasks: &mut Tasks, id: Option<usize>) -> Result<(), TasksError> {
     // If no id is given, print out all tasks
     if let Some(..) = id {
-        if tasks.is_empty() {
-            // Output when no tasks are available
-            output::info(String::from("no tasks found"))
-        } else {
-            // Generate the table of all tasks
-            let table = tables::tasks_table(tasks);
-            // Print the table
-            println!("{}", table);
-        };
-    } else {
         // Get the task the user wants to see
         let id = id.unwrap();
         let task = tasks.get_task(id)?;
 
         // Generate the table for the singular task
         let table = tables::task_table(task, id);
+        // Print the table
+        println!("{}", table);
+    } else if tasks.is_empty() {
+        // Output when no tasks are available
+        output::info(String::from("no tasks found"))
+    } else {
+        // Generate the table of all tasks
+        let table = tables::tasks_table(tasks);
         // Print the table
         println!("{}", table);
     };

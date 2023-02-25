@@ -103,7 +103,7 @@ impl Task {
     }
 
     pub fn stop(&mut self) {
-        if self.when.is_none() {
+        if self.when.is_some() {
             self.status = Status::Inbox;
         } else {
             self.status = Status::Pending;
