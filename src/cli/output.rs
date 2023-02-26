@@ -26,7 +26,7 @@ pub fn task_msg(msg: &str, task: &Task, id: usize) -> String {
     format!(
         "{} task: {}({})",
         msg,
-        task.title.blue(),
+        task.title_string().blue(),
         id.to_string().cyan()
     )
 }

@@ -4,6 +4,7 @@ use crate::cli::tables;
 use crate::tasks::{Task, Tasks, TasksError};
 
 fn parse_tags(tags: Option<String>) -> Option<Vec<String>> {
+    // Split tags into a vector by commas
     tags.map(|tags| tags.split(',').map(str::to_string).collect())
 }
 
@@ -11,7 +12,7 @@ pub fn show(tasks: &mut Tasks, id: Option<usize>) -> Result<(), TasksError> {
     // If no id is given, print out all tasks
     if let Some(id) = id {
         // Get the task the user wants to see
-        let task = tasks.get_task(id)?;
+        let task = tasks.task(id)?;
 
         // Generate the table for the singular task
         let table = tables::task_table(task, id);
@@ -75,7 +76,7 @@ pub fn modify(
     let tags = parse_tags(tags);
 
     // Get the task the user wants
-    let task = tasks.get_task(id)?;
+    let task = tasks.task(id)?;
 
     // If the the user changes the title, show that here
     if title.is_some() {
@@ -93,7 +94,7 @@ pub fn modify(
 pub fn delete(tasks: &mut Tasks, id: usize) -> Result<(), TasksError> {
     // Get the task the user wants to delete for output later
     let mut binding = tasks.clone();
-    let task = binding.get_task(id)?;
+    let task = binding.task(id)?;
 
     // Delete the task
     tasks.remove(id)?;
@@ -114,7 +115,7 @@ pub fn clear(tasks: &mut Tasks) -> Result<(), TasksError> {
 
 pub fn stop(tasks: &mut Tasks, id: usize) -> Result<(), TasksError> {
     // Get the task the user wants to stop
-    let task = tasks.get_task(id)?;
+    let task = tasks.task(id)?;
     // Stop the task
     task.stop();
 
@@ -125,7 +126,7 @@ pub fn stop(tasks: &mut Tasks, id: usize) -> Result<(), TasksError> {
 
 pub fn start(tasks: &mut Tasks, id: usize) -> Result<(), TasksError> {
     // Get the task the user wants to start
-    let task = tasks.get_task(id)?;
+    let task = tasks.task(id)?;
     // Start the task
     task.start();
 
@@ -136,11 +137,22 @@ pub fn start(tasks: &mut Tasks, id: usize) -> Result<(), TasksError> {
 
 pub fn done(tasks: &mut Tasks, id: usize) -> Result<(), TasksError> {
     // Get the task the user wants to complete
-    let task = tasks.get_task(id)?;
+    let task = tasks.task(id)?;
     // Complete the task
     task.complete();
 
     // Success
     output::success(output::task_msg("completed", task, id));
+    Ok(())
+}
+
+pub fn inbox(tasks: &mut Tasks, id: usize) -> Result<(), TasksError> {
+    // Get the task the user wants to return to the inbox
+    let task = tasks.task(id)?;
+    // Inbox the task
+    task.inbox();
+
+    // Success
+    output::success(output::task_msg("inboxed", task, id));
     Ok(())
 }

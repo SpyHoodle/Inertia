@@ -23,6 +23,8 @@ pub enum Commands {
     Start(StartTask),
     /// Marks a task as pending
     Stop(StopTask),
+    /// Returns a task to the inbox
+    Inbox(InboxTask),
     /// Edit a task with $EDITOR
     Edit(EditTask),
     /// Modify a task at the command line
@@ -88,6 +90,11 @@ pub struct StartTask {
 }
 #[derive(Args, PartialEq, Eq, Debug)]
 pub struct StopTask {
+    /// ID of the task
+    pub id: usize,
+}
+#[derive(Args, PartialEq, Eq, Debug)]
+pub struct InboxTask {
     /// ID of the task
     pub id: usize,
 }

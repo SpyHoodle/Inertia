@@ -6,8 +6,10 @@ mod tables;
 
 use crate::args::{Commands, GitExecute, TasksArgs};
 use crate::args::{
-    CompleteTask, CreateTask, DeleteTask, ModifyTask, ShowTask, StartTask, StopTask, SyncTasks,
+    CompleteTask, CreateTask, DeleteTask, InboxTask, ModifyTask, ShowTask, StartTask, StopTask,
+    SyncTasks,
 };
+use crate::repo;
 use crate::tasks::{Tasks, TasksError};
 
 pub fn execute(tasks: &mut Tasks, arguments: TasksArgs) -> Result<(), TasksError> {
@@ -51,6 +53,10 @@ pub fn execute(tasks: &mut Tasks, arguments: TasksArgs) -> Result<(), TasksError
             cmds::stop(tasks, id)?;
         }
 
+        Commands::Inbox(InboxTask { id }) => {
+            cmds::inbox(tasks, id)?;
+        }
+
         Commands::Clear => {
             cmds::clear(tasks)?;
         }
@@ -59,12 +65,12 @@ pub fn execute(tasks: &mut Tasks, arguments: TasksArgs) -> Result<(), TasksError
             cmds::show(tasks, id)?;
         }
 
-        Commands::Git(GitExecute { command }) => match git::execute(&tasks.path, command) {
+        Commands::Git(GitExecute { command }) => match repo::execute(&tasks.path, command) {
             Ok(..) => (),
             Err(..) => panic!("failed to execute git cmd"),
         },
 
-        Commands::Sync(SyncTasks { remote }) => match git::sync(&tasks.path, remote) {
+        Commands::Sync(SyncTasks { remote }) => match repo::sync(&tasks.path, remote) {
             Ok(..) => (),
             Err(..) => panic!("failed"),
         },
