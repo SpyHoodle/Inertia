@@ -6,12 +6,12 @@ use serde::{Deserialize, Serialize};
 pub struct TasksError(String);
 
 impl TasksError {
-    pub fn no_task(id: usize) -> TasksError {
-        TasksError(format!("couldn't find task with id {}", id))
+    pub fn no_task(id: usize) -> Self {
+        Self(format!("couldn't find task with id {}", id))
     }
 
-    pub fn no_tasks() -> TasksError {
-        TasksError(String::from("no tasks available"))
+    pub fn no_tasks() -> Self {
+        Self(String::from("no tasks available"))
     }
 }
 
@@ -24,7 +24,7 @@ pub enum Status {
 }
 
 impl Status {
-    pub fn as_string(&self) -> ColoredString {
+    pub fn as_colored_string(&self) -> ColoredString {
         match self {
             Status::Inbox => "📮 Inbox".blue(),
             Status::Pending => "📅 Pending".yellow(),
@@ -80,32 +80,18 @@ impl Task {
         deadline: Option<NaiveDateTime>,
         reminder: Option<NaiveDateTime>,
     ) {
-        if let Some(title) = title {
-            self.title = title;
-        };
+        self.title = title.unwrap_or_else(|| self.title.clone());
+        self.notes = notes.or_else(|| self.notes.take());
+        self.tags = tags.or_else(|| self.tags.take());
+        self.when = when.or_else(|| self.when.take());
+        self.deadline = deadline.or_else(|| self.deadline.take());
+        self.reminder = reminder.or_else(|| self.reminder.take());
 
-        if let Some(notes) = notes {
-            self.notes = Some(notes);
-        };
-
-        if let Some(tags) = tags {
-            self.tags = Some(tags);
-        };
-
-        if let Some(when) = when {
-            self.when = Some(when);
+        if let Some(_when) = self.when {
             if self.is_inbox() {
-                self.pend()
-            };
-        };
-
-        if let Some(deadline) = deadline {
-            self.deadline = Some(deadline);
-        };
-
-        if let Some(reminder) = reminder {
-            self.reminder = Some(reminder);
-        };
+                self.status = Status::Pending;
+            }
+        }
     }
 }
 
@@ -155,7 +141,7 @@ impl Task {
 }
 
 impl Task {
-    fn date_string(&self, date: &Option<NaiveDateTime>) -> ColoredString {
+    fn date_colored_string(&self, date: &Option<NaiveDateTime>) -> ColoredString {
         if let Some(date) = date {
             let date = date.date();
             let date_string = format!("{}", date.format("%Y-%m-%d"));
@@ -178,15 +164,15 @@ impl Task {
     }
 
     pub fn when_string(&self) -> ColoredString {
-        self.date_string(&self.when)
+        self.date_colored_string(&self.when)
     }
 
     pub fn deadline_string(&self) -> ColoredString {
-        self.date_string(&self.deadline)
+        self.date_colored_string(&self.deadline)
     }
 
     pub fn reminder_string(&self) -> ColoredString {
-        self.date_string(&self.reminder)
+        self.date_colored_string(&self.reminder)
     }
 
     pub fn title_string(&self) -> ColoredString {
@@ -194,7 +180,7 @@ impl Task {
     }
 
     pub fn status_string(&self) -> ColoredString {
-        self.status.as_string()
+        self.status.as_colored_string()
     }
 
     pub fn tags_string(&self) -> ColoredString {
@@ -218,7 +204,7 @@ impl Task {
 pub struct Tasks {
     pub path: String,             // Path to the tasks repository
     pub file: String,             // Path to the tasks file in the repository
-    pub tasks: Option<Vec<Task>>, // All the tasks in one vector
+    pub tasks: Vec<Task>, // All the tasks in one vector
 }
 
 impl Tasks {
@@ -226,7 +212,7 @@ impl Tasks {
         Self {
             path: String::from(repo_path),
             file: String::from(tasks_file),
-            tasks: None,
+            tasks: Vec::new(),
         }
     }
 }
@@ -247,7 +233,7 @@ impl Tasks {
         if self.is_empty() {
             Err(TasksError::no_tasks())
         } else if self.exists(id) {
-            Ok(&mut self.tasks.as_mut().unwrap()[id])
+            Ok(&mut self.tasks[id])
         } else {
             Err(TasksError::no_task(id))
         }
@@ -257,15 +243,15 @@ impl Tasks {
 impl Tasks {
     pub fn push(&mut self, task: Task) {
         if self.is_empty() {
-            self.tasks = Some(vec![task]);
+            self.tasks = vec![task];
         } else {
-            self.tasks.as_mut().unwrap().push(task);
+            self.tasks.push(task);
         };
     }
 
     pub fn remove(&mut self, id: usize) -> Result<(), TasksError> {
         if self.exists(id) {
-            self.tasks.as_mut().unwrap().remove(id);
+            self.tasks.remove(id);
             Ok(())
         } else {
             Err(TasksError::no_task(id))
@@ -273,18 +259,14 @@ impl Tasks {
     }
 
     pub fn len(&self) -> usize {
-        if self.tasks.is_none() {
-            0
-        } else {
-            self.tasks.as_ref().unwrap().len()
-        }
+        self.tasks.len()
     }
 
     pub fn clear(&mut self) -> Result<(), TasksError> {
         if self.is_empty() {
             Err(TasksError::no_tasks())
         } else {
-            self.tasks = None;
+            self.tasks = Vec::new();
             Ok(())
         }
     }

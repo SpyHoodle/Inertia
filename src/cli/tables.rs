@@ -9,6 +9,7 @@ pub fn calc_row(task: &Task, id: usize) -> Row {
         Row::from([
             id.to_string().bright_black().italic(),
             task.status_string().bright_black().italic(),
+            task.tags_string().bright_black().italic(),
             task.title_string().bright_black().italic(),
             task.when_string().bright_black().italic(),
             task.deadline_string().bright_black().italic(),
@@ -18,6 +19,7 @@ pub fn calc_row(task: &Task, id: usize) -> Row {
         Row::from([
             id.to_string().cyan(),
             task.status_string(),
+            task.tags_string(),
             task.title_string(),
             task.when_string(),
             task.deadline_string(),
@@ -31,6 +33,7 @@ pub fn tasks_table(tasks: &Tasks) -> Table {
     table.set_titles(row![
         "ID".magenta().bold(),
         "Status".magenta().bold(),
+        "Tags".magenta().bold(),
         "Title".magenta().bold(),
         "When".magenta().bold(),
         "Deadline".magenta().bold(),
@@ -38,7 +41,7 @@ pub fn tasks_table(tasks: &Tasks) -> Table {
     table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
 
     // Iterate through each task
-    for (id, task) in tasks.tasks.as_ref().unwrap().iter().enumerate() {
+    for (id, task) in tasks.tasks.iter().enumerate() {
         table.add_row(calc_row(task, id));
     }
 
